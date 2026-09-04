@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="책등의 인덱스 색상을 이미지 분류 AI로 인식해 도서 분류번호를 알려주는 준범이의 책가게"
+  />
+  <title>준범이의 책가게 | AI 도서 분류 체험</title>
+
+  <style>
+    /* =========================
+       1. 기본 색상과 공통 설정
+       ========================= */
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f8faff;
+      --text: #172033;
+      --text-soft: #687289;
+      --line: #e4e9f2;
+
+      --primary: #315bea;
+      --primary-dark: #2445bd;
+      --primary-soft: #edf1ff;
+
+      --success: #16865d;
+      --success-soft: #eaf8f2;
+
+      --warning: #a66212;
+      --warning-soft: #fff6e8;
+
+      --danger: #c23b42;
+      --danger-soft: #fff0f1;
+
+      --radius-lg: 28px;
+      --radius-md: 18px;
+      --radius-sm: 12px;
+
+      --shadow:
+        0 24px 70px rgba(25, 39, 73, 0.08),
+        0 4px 14px rgba(25, 39, 73, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(
+          circle at top right,
+          rgba(49, 91, 234, 0.08),
+          transparent 35rem
+        ),
+        var(--bg);
+      color: var(--text);
+      font-family:
+        Pretendard,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Noto Sans KR",
+        Arial,
+        sans-serif;
+      line-height: 1.6;
+      word-break: keep-all;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    label:focus-visible {
+      outline: 3px solid rgba(49, 91, 234, 0.25);
+      outline-offset: 3px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 60px;
+    }
+
+    /* =========================
+       2. 상단 프로젝트 소개
+       ========================= */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.55fr);
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 28px;
+    }
+
+    .hero-main,
+    .model-status-card,
+    .card {
+      background: rgba(255, 255, 255, 0.93);
+      border: 1px solid rgba(226, 232, 242, 0.95);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-main {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      padding: clamp(28px, 5vw, 54px);
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      width: 230px;
+      height: 230px;
+      right: -90px;
+      bottom: -110px;
+      border-radius: 50%;
+      background: rgba(49, 91, 234, 0.07);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      margin-bottom: 16px;
+      padding: 5px 12px;
+      border: 1px solid #dbe3ff;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      font-size: 0.84rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 720px;
+      margin-bottom: 15px;
+      font-size: clamp(2.2rem, 6vw, 4.4rem);
+      line-height: 1.04;
+      letter-spacing: -0.055em;
+    }
+
+    .hero-description {
+      max-width: 690px;
+      margin-bottom: 0;
+      color: var(--text-soft);
+      font-size: clamp(1rem, 2vw, 1.16rem);
+    }
+
+    .model-status-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: var(--radius-lg);
+      padding: 26px;
+    }
+
+    .status-label {
+      margin-bottom: 8px;
+      color: var(--text-soft);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .model-status-text {
+      margin-bottom: 18px;
+      font-size: 1.05rem;
+      font-weight: 750;
+    }
+
+    progress {
+      width: 100%;
+      height: 8px;
+      overflow: hidden;
+      border: 0;
+      border-radius: 999px;
+    }
+
+    progress::-webkit-progress-bar {
+      border-radius: 999px;
+      background: #e9edf5;
+    }
+
+    progress::-webkit-progress-value {
+      border-radius: 999px;
+      background: var(--primary);
+    }
+
+    progress::-moz-progress-bar {
+      border-radius: 999px;
+      background: var(--primary);
+    }
+
+    .retry-button {
+      width: 100%;
+      margin-top: 18px;
+    }
+
+    /* =========================
+       3. 일반 카드
+       ========================= */
+    .card {
+      border-radius: var(--radius-lg);
+      padding: clamp(22px, 4vw, 34px);
+    }
+
+    .section-header {
+      margin-bottom: 22px;
+    }
+
+    .section-header h2 {
+      margin-bottom: 7px;
+      font-size: clamp(1.35rem, 3vw, 1.8rem);
+      letter-spacing: -0.035em;
+    }
+
+    .section-header p {
+      margin-bottom: 0;
+      color: var(--text-soft);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .info-item {
+      min-height: 155px;
+    }
+
+    .mini-label {
+      margin-bottom: 9px;
+      color: var(--primary);
+      font-size: 0.79rem;
+      font-weight: 850;
+      letter-spacing: 0.06em;
+    }
+
+    .info-item h2 {
+      margin-bottom: 9px;
+      font-size: 1.22rem;
+      letter-spacing: -0.025em;
+    }
+
+    .info-item p {
+      margin-bottom: 0;
+      color: var(--text-soft);
+    }
+
+    /* =========================
+       4. 실제 클래스 목록
+       ========================= */
+    .class-card {
+      margin-bottom: 28px;
+    }
+
+    .class-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      min-height: 44px;
+    }
+
+    .class-chip {
+      padding: 8px 13px;
+      border: 1px solid #dce3ef;
+      border-radius: 999px;
+      background: #f8faff;
+      color: #344057;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .class-loading {
+      color: var(--text-soft);
+      font-size: 0.93rem;
+    }
+
+    /* =========================
+       5. 모델 체험 영역
+       ========================= */
+    .experience-card {
+      margin-bottom: 28px;
+      border: 1px solid rgba(49, 91, 234, 0.25);
+      box-shadow:
+        0 28px 80px rgba(49, 91, 234, 0.09),
+        0 8px 20px rgba(27, 42, 75, 0.05);
+    }
+
+    .experience-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .experience-heading h2 {
+      margin-bottom: 7px;
+      font-size: clamp(1.55rem, 4vw, 2.2rem);
+      letter-spacing: -0.045em;
+    }
+
+    .experience-heading p {
+      max-width: 620px;
+      margin-bottom: 0;
+      color: var(--text-soft);
+    }
+
+    .model-type-badge {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .important-guide {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      padding: 16px 18px;
+      border: 1px solid #f0d6a9;
+      border-radius: var(--radius-md);
+      background: var(--warning-soft);
+      color: #6f4918;
+    }
+
+    .guide-mark {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border: 1px solid rgba(166, 98, 18, 0.3);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 900;
+    }
+
+    .important-guide strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #5f3a0f;
+    }
+
+    .experience-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(330px, 0.9fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* 입력 방식 탭 */
+    .input-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 16px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #f2f4f8;
+    }
+
+    .tab-button {
+      min-height: 48px;
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 11px;
+      background: transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .tab-button.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 2px 9px rgba(25, 39, 73, 0.08);
+    }
+
+    /* 카메라/업로드 화면 */
+    .input-panel {
+      min-width: 0;
+    }
+
+    .media-frame {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      overflow: hidden;
+      aspect-ratio: 1 / 1;
+      border: 1px solid #dfe5ef;
+      border-radius: 23px;
+      background:
+        linear-gradient(135deg, #f4f7fb, #edf1f8);
+      isolation: isolate;
+    }
+
+    .media-frame canvas,
+    .media-frame img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #uploadedImage {
+      position: absolute;
+      inset: 0;
+    }
+
+    .preview-placeholder {
+      position: relative;
+      z-index: 1;
+      width: min(76%, 320px);
+      text-align: center;
+      color: var(--text-soft);
+    }
+
+    .viewfinder {
+      position: relative;
+      width: 84px;
+      height: 84px;
+      margin: 0 auto 18px;
+    }
+
+    .viewfinder::before,
+    .viewfinder::after,
+    .viewfinder-inner::before,
+    .viewfinder-inner::after {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: #7a8aab;
+    }
+
+    .viewfinder::before {
+      top: 0;
+      left: 0;
+      border-top: 3px solid;
+      border-left: 3px solid;
+      border-radius: 5px 0 0 0;
+    }
+
+    .viewfinder::after {
+      top: 0;
+      right: 0;
+      border-top: 3px solid;
+      border-right: 3px solid;
+      border-radius: 0 5px 0 0;
+    }
+
+    .viewfinder-inner::before {
+      bottom: 0;
+      left: 0;
+      border-bottom: 3px solid;
+      border-left: 3px solid;
+      border-radius: 0 0 0 5px;
+    }
+
+    .viewfinder-inner::after {
+      right: 0;
+      bottom: 0;
+      border-right: 3px solid;
+      border-bottom: 3px solid;
+      border-radius: 0 0 5px 0;
+    }
+
+    .placeholder-title {
+      display: block;
+      margin-bottom: 5px;
+      color: #344057;
+      font-weight: 800;
+    }
+
+    .placeholder-text {
+      margin: 0;
+      font-size: 0.88rem;
+    }
+
+    /* iOS Safari에서 카메라가 멈추는 문제를 줄이기 위한 보조 video */
+    .ios-helper-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      width: 2px;
+      height: 2px;
+      opacity: 0.01;
+      pointer-events: none;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .button {
+      min-height: 50px;
+      padding: 12px 18px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 800;
+      transition:
+        transform 100ms ease,
+        background-color 100ms ease,
+        border-color 100ms ease;
+    }
+
+    .button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .button-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .button-primary:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    .button-secondary {
+      border-color: #d9e0ec;
+      background: #fff;
+      color: #344057;
+    }
+
+    .button-secondary:hover:not(:disabled) {
+      background: #f5f7fa;
+    }
+
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+
+    .file-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      padding: 12px 18px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .privacy-note {
+      margin: 12px 2px 0;
+      color: var(--text-soft);
+      font-size: 0.82rem;
+    }
+
+    /* 오류 및 상태 */
+    .message-box {
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-radius: 13px;
+      font-size: 0.88rem;
+    }
+
+    .message-box.error {
+      border: 1px solid #f3c7ca;
+      background: var(--danger-soft);
+      color: #8d282e;
+    }
+
+    .message-box.info {
+      border: 1px solid #d9e2ff;
+      background: var(--primary-soft);
+      color: #304ba3;
+    }
+
+    /* =========================
+       6. 예측 결과
+       ========================= */
+    .result-panel {
+      min-width: 0;
+      min-height: 580px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 23px;
+      background: var(--surface-soft);
+    }
+
+    .result-title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .result-title-row h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .result-state {
+      color: var(--text-soft);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .top-result {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 158px;
+      margin-bottom: 16px;
+      padding: 22px;
+      border: 1px solid #d9e2ff;
+      border-radius: 19px;
+      background:
+        linear-gradient(
+          145deg,
+          rgba(49, 91, 234, 0.12),
+          rgba(255, 255, 255, 0.7)
+        );
+    }
+
+    .top-result-label {
+      margin-bottom: 7px;
+      color: var(--primary-dark);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.06em;
+    }
+
+    .top-result-name {
+      min-height: 42px;
+      margin-bottom: 3px;
+      font-size: clamp(1.55rem, 4vw, 2.15rem);
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.04em;
+    }
+
+    .top-result-probability {
+      min-height: 28px;
+      color: var(--primary);
+      font-size: 1.15rem;
+      font-weight: 850;
+    }
+
+    .result-warning {
+      margin: 0 0 18px;
+      color: var(--text-soft);
+      font-size: 0.81rem;
+      line-height: 1.5;
+    }
+
+    .probability-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .probability-row {
+      min-width: 0;
+    }
+
+    .probability-info {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 5px;
+      font-size: 0.84rem;
+    }
+
+    .probability-name {
+      overflow: hidden;
+      color: #39455b;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .probability-value {
+      flex: 0 0 54px;
+      color: #39455b;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e3e8f1;
+    }
+
+    .bar-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: var(--primary);
+      transition: width 140ms linear;
+    }
+
+    /* =========================
+       7. 한계 / 사람 확인
+       ========================= */
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .review-card {
+      min-height: 220px;
+    }
+
+    .review-card.warning-card {
+      border-color: #f0dfbd;
+      background: linear-gradient(
+        145deg,
+        #fffdf9,
+        #ffffff
+      );
+    }
+
+    .review-card h2 {
+      margin-bottom: 10px;
+      font-size: 1.25rem;
+      letter-spacing: -0.025em;
+    }
+
+    .review-card p {
+      margin-bottom: 0;
+      color: var(--text-soft);
+    }
+
+    .review-emphasis {
+      margin-top: 18px !important;
+      padding: 14px 16px;
+      border-radius: 13px;
+      background: var(--warning-soft);
+      color: #714916 !important;
+      font-weight: 750;
+    }
+
+    /* =========================
+       8. 팀 정보
+       ========================= */
+    .team-card {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: flex-end;
+    }
+
+    .team-card h2 {
+      margin-bottom: 6px;
+      font-size: 1.4rem;
+    }
+
+    .team-members {
+      margin: 0;
+      color: var(--text-soft);
+    }
+
+    .project-name-small {
+      color: var(--text-soft);
+      font-size: 0.83rem;
+      text-align: right;
+    }
+
+    /* =========================
+       9. 반응형
+       ========================= */
+    @media (max-width: 900px) {
+      .hero,
+      .experience-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .model-status-card {
+        min-height: 170px;
+      }
+
+      .result-panel {
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .page {
+        width: min(100% - 22px, 1180px);
+        padding-top: 18px;
+      }
+
+      .hero {
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .hero-main,
+      .model-status-card,
+      .card {
+        border-radius: 22px;
+      }
+
+      .hero-main {
+        padding: 29px 22px;
+      }
+
+      .model-status-card,
+      .card {
+        padding: 21px;
+      }
+
+      .info-grid,
+      .review-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .class-card,
+      .experience-card,
+      .review-grid {
+        margin-bottom: 14px;
+      }
+
+      .experience-heading {
+        flex-direction: column;
+        margin-bottom: 18px;
+      }
+
+      .model-type-badge {
+        align-self: flex-start;
+      }
+
+      .important-guide {
+        padding: 14px;
+      }
+
+      .experience-layout {
+        gap: 18px;
+      }
+
+      .media-frame {
+        border-radius: 18px;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .controls .button,
+      .controls .file-button {
+        width: 100%;
+      }
+
+      .result-panel {
+        padding: 17px;
+        border-radius: 18px;
+      }
+
+      .top-result {
+        min-height: 145px;
+        padding: 18px;
+      }
+
+      .team-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .project-name-small {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .input-tabs {
+        gap: 4px;
+      }
+
+      .tab-button {
+        padding-inline: 8px;
+        font-size: 0.9rem;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .probability-info {
+        font-size: 0.8rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <!-- =========================
+         프로젝트 소개
+         ========================= -->
+    <section class="hero">
+      <div class="hero-main">
+        <span class="eyebrow">IMAGE CLASSIFICATION PROJECT</span>
+        <h1>준범이의 책가게</h1>
+        <p class="hero-description">
+          책등의 인덱스 색상을 카메라나 사진으로 보여주면,
+          AI가 어떤 도서 분류번호에 해당하는지 예측합니다.
+        </p>
+      </div>
+
+      <aside
+        class="model-status-card"
+        id="modelStatusCard"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <div>
+          <div class="status-label">AI MODEL STATUS</div>
+          <p class="model-status-text" id="modelStatusText">
+            모델을 불러오는 중입니다…
+          </p>
+
+          <progress
+            id="modelProgress"
+            aria-label="모델 불러오기 진행 상태"
+          ></progress>
+        </div>
+
+        <button
+          type="button"
+          class="button button-secondary retry-button"
+          id="retryModelButton"
+          hidden
+        >
+          모델 다시 불러오기
+        </button>
+      </aside>
+    </section>
+
+    <!-- =========================
+         문제와 사용자
+         ========================= -->
+    <section class="info-grid" aria-label="프로젝트 정보">
+      <article class="card info-item">
+        <div class="mini-label">PROBLEM</div>
+        <h2>어떤 문제를 해결하나요?</h2>
+        <p>
+          도서관에서는 편의를 위해 분류번호로 책을 구분해 배치하지만,
+          대부분의 학생들은 책의 분류번호가 어떤 뜻인지 알기 어렵습니다.
+        </p>
+      </article>
+
+      <article class="card info-item">
+        <div class="mini-label">USER</div>
+        <h2>누구를 위한 모델인가요?</h2>
+        <p>
+          도서관을 이용하는 학생들이 책의 인덱스를 통해
+          해당 책의 분류를 더 쉽게 확인할 수 있도록 만든 모델입니다.
+        </p>
+      </article>
+    </section>
+
+    <!-- =========================
+         실제 모델 클래스
+         클래스명은 JavaScript에서 메타데이터를 읽어 자동 생성
+         ========================= -->
+    <section class="card class-card">
+      <div class="section-header">
+        <div class="mini-label">MODEL CLASSES</div>
+        <h2>AI가 구분하는 분류</h2>
+        <p>
+          아래 항목은 코드에 임의로 입력하지 않고
+          실제 모델 메타데이터에서 불러옵니다.
+        </p>
+      </div>
+
+      <div class="class-list" id="classList">
+        <span class="class-loading">모델의 클래스 정보를 불러오는 중입니다…</span>
+      </div>
+    </section>
+
+    <!-- =========================
+         핵심 모델 체험
+         ========================= -->
+    <section class="card experience-card" id="experience">
+      <div class="experience-heading">
+        <div>
+          <div class="mini-label">TRY THE MODEL</div>
+          <h2>책을 직접 분류해보세요</h2>
+          <p>
+            실시간 카메라 또는 사진 업로드 중 하나를 선택해
+            책등의 인덱스를 AI에게 보여주세요.
+          </p>
+        </div>
+
+        <span class="model-type-badge">이미지 분류 모델</span>
+      </div>
+
+      <div class="important-guide">
+        <div class="guide-mark" aria-hidden="true">!</div>
+        <div>
+          <strong>촬영할 때 가장 중요합니다.</strong>
+          인덱스만 잘 보이도록 책등 가까이에서 촬영해주세요.
+          주변 물체나 다른 색이 화면을 너무 많이 차지하지 않도록 해주세요.
+        </div>
+      </div>
+
+      <div class="experience-layout">
+        <!-- 왼쪽: 입력 -->
+        <div class="input-panel">
+          <div
+            class="input-tabs"
+            role="tablist"
+            aria-label="이미지 입력 방법"
+          >
+            <button
+              type="button"
+              id="cameraTab"
+              class="tab-button active"
+              role="tab"
+              aria-selected="true"
+            >
+              실시간 카메라
+            </button>
+
+            <button
+              type="button"
+              id="uploadTab"
+              class="tab-button"
+              role="tab"
+              aria-selected="false"
+            >
+              사진 업로드
+            </button>
+          </div>
+
+          <!-- 실제 카메라 canvas 또는 업로드 이미지가 들어가는 영역 -->
+          <div class="media-frame" id="mediaFrame">
+            <div class="preview-placeholder" id="previewPlaceholder">
+              <div class="viewfinder" aria-hidden="true">
+                <div class="viewfinder-inner"></div>
+              </div>
+
+              <strong class="placeholder-title" id="placeholderTitle">
+                카메라가 아직 꺼져 있습니다
+              </strong>
+
+              <p class="placeholder-text" id="placeholderText">
+                아래의 카메라 시작 버튼을 눌러주세요.
+              </p>
+            </div>
+
+            <img
+              id="uploadedImage"
+              alt="업로드한 책 이미지 미리보기"
+              hidden
+            />
+          </div>
+
+          <!-- 카메라용 버튼 -->
+          <div class="controls" id="cameraControls">
+            <button
+              type="button"
+              class="button button-primary"
+              id="startCameraButton"
+              disabled
+            >
+              카메라 시작
+            </button>
+
+            <button
+              type="button"
+              class="button button-secondary"
+              id="stopCameraButton"
+              disabled
+            >
+              카메라 중지
+            </button>
+          </div>
+
+          <!-- 파일 업로드용 버튼 -->
+          <div class="controls" id="uploadControls" hidden>
+            <input
+              class="file-input"
+              type="file"
+              id="imageFileInput"
+              accept="image/*"
+            />
+
+            <label
+              class="file-button"
+              id="fileInputLabel"
+              for="imageFileInput"
+            >
+              사진 선택
+            </label>
+          </div>
+
+          <p class="privacy-note" id="privacyNote" hidden>
+            선택한 사진은 브라우저 안에서만 AI 분석에 사용되며
+            별도의 서버로 업로드하거나 저장하지 않습니다.
+          </p>
+
+          <div
+            class="message-box error"
+            id="errorMessage"
+            role="alert"
+            hidden
+          ></div>
+
+          <div
+            class="message-box info"
+            id="inputStatusMessage"
+            aria-live="polite"
+            hidden
+          ></div>
+        </div>
+
+        <!-- 오른쪽: 카메라와 업로드에서 공통으로 사용하는 결과 영역 -->
+        <section class="result-panel" aria-label="AI 예측 결과">
+          <div class="result-title-row">
+            <h3>예측 결과</h3>
+            <span class="result-state" id="resultState">
+              입력 대기 중
+            </span>
+          </div>
+
+          <div class="top-result">
+            <span class="top-result-label">가장 높은 예측</span>
+            <div class="top-result-name" id="topResultName">—</div>
+            <div
+              class="top-result-probability"
+              id="topResultProbability"
+            >
+              0.0%
+            </div>
+          </div>
+
+          <p class="result-warning">
+            가장 높은 확률의 결과도 반드시 정답이라는 뜻은 아닙니다.
+            실제 책의 인덱스와 함께 사람이 다시 확인해주세요.
+          </p>
+
+          <div
+            class="probability-list"
+            id="probabilityList"
+            aria-live="polite"
+          >
+            <p class="class-loading" id="predictionPlaceholder">
+              모델 준비 후 클래스별 확률이 여기에 표시됩니다.
+            </p>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- =========================
+         한계와 사람의 확인
+         ========================= -->
+    <section class="review-grid">
+      <article class="card review-card">
+        <div class="mini-label">LIMITATION</div>
+        <h2>학습 과정에서 확인한 한계</h2>
+        <p>
+          초기 모델에서는 책등 이외의 색이 화면에서 책등보다 더 넓게
+          나타날 경우, 그 색을 기준으로 책의 종류를 판단하는
+          오분류 문제가 있었습니다.
+        </p>
+        <p style="margin-top: 12px;">
+          이를 개선하기 위해 데이터를 더 다양하게 수집해 다시 학습했고,
+          다른 요소보다 책등 색을 기준으로 종류를 구분할 수 있도록
+          모델을 개선했습니다.
+        </p>
+      </article>
+
+      <article class="card review-card warning-card">
+        <div class="mini-label">HUMAN CHECK</div>
+        <h2>왜 사람이 다시 확인해야 하나요?</h2>
+        <p>
+          AI가 보여주는 값은 각 클래스일 가능성을 계산한 예측값입니다.
+          따라서 가장 높은 확률이 나왔다고 해서 그것이 항상 정답이라고
+          단정할 수는 없습니다.
+        </p>
+
+        <p class="review-emphasis">
+          사진을 찍을 때 반드시 인덱스가 중심에 보이도록
+          책등을 굉장히 가까이에서 촬영해주세요.
+        </p>
+      </article>
+    </section>
+
+    <!-- =========================
+         팀 정보
+         ========================= -->
+    <footer class="card team-card">
+      <div>
+        <div class="mini-label">TEAM</div>
+        <h2>주은이와 채현이</h2>
+        <p class="team-members">
+          우준범 · 유채현 · 윤주은
+        </p>
+      </div>
+
+      <div class="project-name-small">
+        준범이의 책가게<br />
+        Teachable Machine Image Classification
+      </div>
+    </footer>
+  </main>
+
+  <!--
+    Teachable Machine Image 공식 라이브러리
+    별도 서버 없이 GitHub Pages에서 사용할 수 있도록 CDN으로 불러옵니다.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.3/dist/teachablemachine-image.min.js"></script>
+
+  <script>
+    "use strict";
+
+    /* =========================================================
+       1. 티처블 머신 모델 주소
+       ========================================================= */
+
+    const MODEL_BASE_URL =
+      "https://teachablemachine.withgoogle.com/models/8TTH4_r1s/";
+
+    const MODEL_URL = MODEL_BASE_URL + "model.json";
+    const METADATA_URL = MODEL_BASE_URL + "metadata.json";
+
+
+    /* =========================================================
+       2. 앱 상태
+       ========================================================= */
+
+    let model = null;
+    let modelLoadPromise = null;
+    let classLabels = [];
+
+    let webcam = null;
+    let cameraRunning = false;
+    let cameraStarting = false;
+    let animationFrameId = null;
+
+    // 시작/중지가 빠르게 반복될 때 이전 작업을 무효화하기 위한 번호
+    let cameraSessionId = 0;
+
+    // 업로드 이미지의 Object URL을 나중에 해제하기 위해 저장
+    let uploadObjectUrl = null;
+
+    let currentInputMode = "camera";
+
+
+    /* =========================================================
+       3. DOM 요소
+       ========================================================= */
+
+    const modelStatusCard = document.getElementById("modelStatusCard");
+    const modelStatusText = document.getElementById("modelStatusText");
+    const modelProgress = document.getElementById("modelProgress");
+    const retryModelButton = document.getElementById("retryModelButton");
+
+    const classList = document.getElementById("classList");
+
+    const cameraTab = document.getElementById("cameraTab");
+    const uploadTab = document.getElementById("uploadTab");
+
+    const mediaFrame = document.getElementById("mediaFrame");
+    const previewPlaceholder = document.getElementById("previewPlaceholder");
+    const placeholderTitle = document.getElementById("placeholderTitle");
+    const placeholderText = document.getElementById("placeholderText");
+
+    const startCameraButton =
+      document.getElementById("startCameraButton");
+    const stopCameraButton =
+      document.getElementById("stopCameraButton");
+
+    const cameraControls = document.getElementById("cameraControls");
+    const uploadControls = document.getElementById("uploadControls");
+
+    const imageFileInput = document.getElementById("imageFileInput");
+    const uploadedImage = document.getElementById("uploadedImage");
+    const privacyNote = document.getElementById("privacyNote");
+
+    const errorMessage = document.getElementById("errorMessage");
+    const inputStatusMessage =
+      document.getElementById("inputStatusMessage");
+
+    const resultState = document.getElementById("resultState");
+    const topResultName = document.getElementById("topResultName");
+    const topResultProbability =
+      document.getElementById("topResultProbability");
+
+    const probabilityList = document.getElementById("probabilityList");
+
+
+    /* =========================================================
+       4. 클래스 이름 화면 출력 보정
+       ========================================================= */
+
+    function getDisplayClassName(rawClassName) {
+      /*
+        모델 자체의 클래스 이름은 건드리지 않습니다.
+        제작 과정에서 생긴 "800 언어" 오타만 화면에서 "800 문학"으로 표시합니다.
+      */
+      if (
+        typeof rawClassName === "string" &&
+        rawClassName.trim() === "800 언어"
+      ) {
+        return "800 문학";
+      }
+
+      return rawClassName;
+    }
+
+
+    /* =========================================================
+       5. 모델 로딩
+       ========================================================= */
+
+    async function loadModel() {
+      // 이미 모델이 준비되었다면 다시 불러오지 않음
+      if (model) {
+        return model;
+      }
+
+      // 현재 로딩 중이라면 같은 Promise를 사용해서 중복 로딩 방지
+      if (modelLoadPromise) {
+        return modelLoadPromise;
+      }
+
+      modelLoadPromise = (async () => {
+        try {
+          setModelLoadingState();
+
+          if (!window.tf || !window.tmImage) {
+            throw new Error(
+              "TensorFlow.js 또는 Teachable Machine 라이브러리를 불러오지 못했습니다."
+            );
+          }
+
+          // TensorFlow.js가 사용할 준비가 될 때까지 기다림
+          await tf.ready();
+
+          modelStatusText.textContent =
+            "AI 모델과 클래스 정보를 불러오는 중입니다…";
+
+          /*
+            model.json과 metadata.json을 함께 불러옵니다.
+            클래스 이름은 metadata.json에 저장되어 있습니다.
+          */
+          const loadedModel = await tmImage.load(
+            MODEL_URL,
+            METADATA_URL
+          );
+
+          const loadedLabels = loadedModel.getClassLabels();
+
+          if (
+            !Array.isArray(loadedLabels) ||
+            loadedLabels.length === 0
+          ) {
+            throw new Error(
+              "모델의 클래스 정보를 확인할 수 없습니다."
+            );
+          }
+
+          model = loadedModel;
+          classLabels = loadedLabels;
+
+          renderClassList();
+          createProbabilityRows();
+          setModelReadyState();
+
+          return model;
+        } catch (error) {
+          console.error("모델 로딩 오류:", error);
+
+          model = null;
+          classLabels = [];
+
+          setModelErrorState();
+
+          throw error;
+        } finally {
+          // 실패했을 경우 다시 시도할 수 있게 Promise 상태를 초기화
+          if (!model) {
+            modelLoadPromise = null;
+          }
+        }
+      })();
+
+      return modelLoadPromise;
+    }
+
+
+    function setModelLoadingState() {
+      modelStatusCard.setAttribute("aria-busy", "true");
+
+      modelStatusText.textContent =
+        "티처블 머신 모델을 불러오는 중입니다…";
+
+      // value가 없는 progress는 로딩 중임을 나타냄
+      modelProgress.removeAttribute("value");
+      modelProgress.setAttribute("max", "1");
+
+      retryModelButton.hidden = true;
+      startCameraButton.disabled = true;
+    }
+
+
+    function setModelReadyState() {
+      modelStatusCard.setAttribute("aria-busy", "false");
+
+      modelStatusText.textContent =
+        `모델 준비 완료 · ${classLabels.length}개 클래스`;
+
+      modelProgress.max = 1;
+      modelProgress.value = 1;
+
+      retryModelButton.hidden = true;
+      startCameraButton.disabled = false;
+    }
+
+
+    function setModelErrorState() {
+      modelStatusCard.setAttribute("aria-busy", "false");
+
+      modelStatusText.textContent =
+        "모델을 불러오지 못했습니다. 인터넷 연결과 모델 주소를 확인한 뒤 다시 시도해주세요.";
+
+      modelProgress.max = 1;
+      modelProgress.value = 0;
+
+      retryModelButton.hidden = false;
+      startCameraButton.disabled = true;
+
+      classList.innerHTML =
+        '<span class="class-loading">클래스 정보를 불러올 수 없습니다.</span>';
+    }
+
+
+    /* =========================================================
+       6. 실제 모델 클래스 표시
+       ========================================================= */
+
+    function renderClassList() {
+      classList.innerHTML = "";
+
+      classLabels.forEach((rawClassName) => {
+        const chip = document.createElement("span");
+
+        chip.className = "class-chip";
+        chip.textContent = getDisplayClassName(rawClassName);
+
+        classList.appendChild(chip);
+      });
+    }
+
+
+    /* =========================================================
+       7. 예측 결과 행 생성
+       예측할 때마다 DOM을 새로 만들지 않아 화면이 덜 움직입니다.
+       ========================================================= */
+
+    function createProbabilityRows() {
+      probabilityList.innerHTML = "";
+
+      classLabels.forEach((rawClassName, index) => {
+        const row = document.createElement("div");
+        row.className = "probability-row";
+        row.dataset.index = String(index);
+
+        const info = document.createElement("div");
+        info.className = "probability-info";
+
+        const name = document.createElement("span");
+        name.className = "probability-name";
+        name.textContent = getDisplayClassName(rawClassName);
+
+        const value = document.createElement("span");
+        value.className = "probability-value";
+        value.textContent = "0.0%";
+
+        const track = document.createElement("div");
+        track.className = "bar-track";
+
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = "0%";
+
+        track.appendChild(fill);
+        info.appendChild(name);
+        info.appendChild(value);
+
+        row.appendChild(info);
+        row.appendChild(track);
+
+        probabilityList.appendChild(row);
+      });
+    }
+
+
+    function resetPredictionResult(message = "입력 대기 중") {
+      resultState.textContent = message;
+      topResultName.textContent = "—";
+      topResultProbability.textContent = "0.0%";
+
+      const rows =
+        probabilityList.querySelectorAll(".probability-row");
+
+      rows.forEach((row) => {
+        const value =
+          row.querySelector(".probability-value");
+        const fill =
+          row.querySelector(".bar-fill");
+
+        if (value) {
+          value.textContent = "0.0%";
+        }
+
+        if (fill) {
+          fill.style.width = "0%";
+        }
+      });
+    }
+
+
+    /* =========================================================
+       8. 예측값을 같은 결과 영역에 출력
+       ========================================================= */
+
+    function displayPredictions(predictions) {
+      if (!Array.isArray(predictions) || predictions.length === 0) {
+        return;
+      }
+
+      let highestPrediction = predictions[0];
+
+      predictions.forEach((prediction, index) => {
+        if (
+          prediction.probability >
+          highestPrediction.probability
+        ) {
+          highestPrediction = prediction;
+        }
+
+        const row =
+          probabilityList.querySelector(
+            `.probability-row[data-index="${index}"]`
+          );
+
+        if (!row) {
+          return;
+        }
+
+        const valueElement =
+          row.querySelector(".probability-value");
+        const fillElement =
+          row.querySelector(".bar-fill");
+        const nameElement =
+          row.querySelector(".probability-name");
+
+        const percentage = Math.max(
+          0,
+          Math.min(100, prediction.probability * 100)
+        );
+
+        if (nameElement) {
+          nameElement.textContent =
+            getDisplayClassName(prediction.className);
+        }
+
+        if (valueElement) {
+          valueElement.textContent =
+            percentage.toFixed(1) + "%";
+        }
+
+        if (fillElement) {
+          fillElement.style.width =
+            percentage.toFixed(2) + "%";
+        }
+      });
+
+      const highestPercentage =
+        highestPrediction.probability * 100;
+
+      topResultName.textContent =
+        getDisplayClassName(highestPrediction.className);
+
+      topResultProbability.textContent =
+        highestPercentage.toFixed(1) + "%";
+
+      resultState.textContent = "예측 중";
+    }
+
+
+    /* =========================================================
+       9. 입력 방식 전환
+       ========================================================= */
+
+    async function selectInputMode(mode) {
+      if (mode !== "camera" && mode !== "upload") {
+        return;
+      }
+
+      clearMessages();
+
+      /*
+        파일 업로드로 바꾸면 카메라를 먼저 완전히 중지합니다.
+      */
+      if (mode === "upload") {
+        stopCamera();
+
+        cameraTab.classList.remove("active");
+        uploadTab.classList.add("active");
+
+        cameraTab.setAttribute("aria-selected", "false");
+        uploadTab.setAttribute("aria-selected", "true");
+
+        cameraControls.hidden = true;
+        uploadControls.hidden = false;
+        privacyNote.hidden = false;
+
+        currentInputMode = "upload";
+
+        if (uploadedImage.hidden) {
+          showPlaceholder(
+            "사진을 선택해주세요",
+            "책등의 인덱스가 크게 보이는 사진을 사용해주세요."
+          );
+        }
+
+        resetPredictionResult("사진 대기 중");
+        return;
+      }
+
+      /*
+        카메라로 바꾸면 이전 업로드 이미지와 Object URL을 정리합니다.
+      */
+      clearUploadedImage();
+
+      uploadTab.classList.remove("active");
+      cameraTab.classList.add("active");
+
+      uploadTab.setAttribute("aria-selected", "false");
+      cameraTab.setAttribute("aria-selected", "true");
+
+      uploadControls.hidden = true;
+      cameraControls.hidden = false;
+      privacyNote.hidden = true;
+
+      currentInputMode = "camera";
+
+      showPlaceholder(
+        "카메라가 아직 꺼져 있습니다",
+        "아래의 카메라 시작 버튼을 눌러주세요."
+      );
+
+      resetPredictionResult("입력 대기 중");
+    }
+
+
+    /* =========================================================
+       10. 카메라 시작
+       ========================================================= */
+
+    async function startCamera() {
+      // 연속 클릭으로 중복 카메라가 만들어지는 것을 방지
+      if (cameraRunning || cameraStarting) {
+        return;
+      }
+
+      clearMessages();
+
+      if (currentInputMode !== "camera") {
+        await selectInputMode("camera");
+      }
+
+      /*
+        일반 배포 환경에서 카메라는 HTTPS가 필요합니다.
+        GitHub Pages는 HTTPS를 제공하므로 정상 작동합니다.
+      */
+      const isLocalhost =
+        location.hostname === "localhost" ||
+        location.hostname === "127.0.0.1";
+
+      if (
+        !window.isSecureContext &&
+        !isLocalhost
+      ) {
+        showError(
+          "카메라를 사용하려면 HTTPS 환경이 필요합니다. GitHub Pages처럼 HTTPS로 접속하거나 localhost에서 실행해주세요."
+        );
+        return;
+      }
+
+      cameraStarting = true;
+
+      startCameraButton.disabled = true;
+      stopCameraButton.disabled = false;
+
+      showInputStatus(
+        "카메라 권한을 확인하고 있습니다…"
+      );
+
+      const mySessionId = ++cameraSessionId;
+
+      let newWebcam = null;
+
+      try {
+        // 모델이 아직 준비되지 않았다면 먼저 한 번만 로드
+        await loadModel();
+
+        /*
+          책등을 촬영하므로 모바일에서는 가능하면 후면 카메라를 요청합니다.
+          ideal 조건이라 후면 카메라가 없는 PC에서는 사용 가능한 카메라가 선택됩니다.
+        */
+        newWebcam = new tmImage.Webcam(
+          420,
+          420,
+          false
+        );
+
+        await newWebcam.setup({
+          facingMode: {
+            ideal: "environment"
+          }
+        });
+
+        // 카메라 준비 중 사용자가 중지 버튼을 눌렀다면 실행하지 않음
+        if (mySessionId !== cameraSessionId) {
+          safelyStopWebcam(newWebcam);
+          return;
+        }
+
+        await newWebcam.play();
+
+        if (mySessionId !== cameraSessionId) {
+          safelyStopWebcam(newWebcam);
+          return;
+        }
+
+        webcam = newWebcam;
+        cameraRunning = true;
+        cameraStarting = false;
+
+        removeCameraElements();
+
+        /*
+          iOS Safari에서는 video 요소가 DOM에 있어야 영상이
+          정상 갱신되는 경우가 있어 보조 video 요소도 추가합니다.
+        */
+        if (isIOSDevice() && webcam.webcam) {
+          webcam.webcam.setAttribute("playsinline", "true");
+          webcam.webcam.muted = true;
+          webcam.webcam.classList.add("ios-helper-video");
+
+          mediaFrame.appendChild(webcam.webcam);
+        }
+
+        // 실제 화면과 모델 입력에는 Teachable Machine의 canvas 사용
+        webcam.canvas.setAttribute(
+          "aria-label",
+          "실시간 카메라 화면"
+        );
+
+        mediaFrame.appendChild(webcam.canvas);
+
+        previewPlaceholder.hidden = true;
+        uploadedImage.hidden = true;
+
+        startCameraButton.disabled = true;
+        stopCameraButton.disabled = false;
+
+        hideInputStatus();
+        resultState.textContent = "실시간 분석 중";
+
+        // 한 번만 예측 루프 시작
+        cameraLoop(mySessionId);
+      } catch (error) {
+        console.error("카메라 시작 오류:", error);
+
+        if (newWebcam) {
+          safelyStopWebcam(newWebcam);
+        }
+
+        cameraRunning = false;
+        cameraStarting = false;
+
+        if (mySessionId === cameraSessionId) {
+          startCameraButton.disabled = !model;
+          stopCameraButton.disabled = true;
+
+          showPlaceholder(
+            "카메라를 시작하지 못했습니다",
+            "아래 안내를 확인한 뒤 다시 시도해주세요."
+          );
+
+          showCameraError(error);
+        }
+      }
+    }
+
+
+    /* =========================================================
+       11. 실시간 카메라 예측 반복
+       ========================================================= */
+
+    async function cameraLoop(sessionId) {
+      if (
+        !cameraRunning ||
+        sessionId !== cameraSessionId ||
+        !webcam
+      ) {
+        return;
+      }
+
+      try {
+        // video의 현재 프레임을 canvas에 반영
+        webcam.update();
+
+        /*
+          Teachable Machine Image 모델에 webcam.canvas를 직접 전달합니다.
+        */
+        const predictions =
+          await model.predict(webcam.canvas);
+
+        // 예측 중 카메라가 중지됐을 수 있으므로 한 번 더 확인
+        if (
+          !cameraRunning ||
+          sessionId !== cameraSessionId ||
+          !webcam
+        ) {
+          return;
+        }
+
+        displayPredictions(predictions);
+
+        // 이전 예측이 끝난 다음 프레임을 예약하므로 루프가 중첩되지 않음
+        animationFrameId =
+          window.requestAnimationFrame(() => {
+            cameraLoop(sessionId);
+          });
+      } catch (error) {
+        console.error("실시간 예측 오류:", error);
+
+        stopCamera();
+
+        showError(
+          "카메라 영상 분석 중 문제가 발생했습니다. 카메라를 다시 시작해주세요."
+        );
+      }
+    }
+
+
+    /* =========================================================
+       12. 카메라 중지 및 리소스 정리
+       ========================================================= */
+
+    function stopCamera() {
+      // 현재 세션을 무효화해서 진행 중이던 비동기 작업도 더 이상 사용되지 않게 함
+      cameraSessionId += 1;
+
+      cameraRunning = false;
+      cameraStarting = false;
+
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+
+      if (webcam) {
+        safelyStopWebcam(webcam);
+        webcam = null;
+      }
+
+      removeCameraElements();
+
+      startCameraButton.disabled = !model;
+      stopCameraButton.disabled = true;
+
+      hideInputStatus();
+
+      if (currentInputMode === "camera") {
+        showPlaceholder(
+          "카메라가 꺼져 있습니다",
+          "다시 사용하려면 카메라 시작 버튼을 눌러주세요."
+        );
+
+        resetPredictionResult("카메라 중지됨");
+      }
+    }
+
+
+    function safelyStopWebcam(targetWebcam) {
+      if (!targetWebcam) {
+        return;
+      }
+
+      try {
+        // Teachable Machine Webcam의 공식 stop()
+        targetWebcam.stop();
+      } catch (error) {
+        console.warn("webcam.stop() 처리 중 경고:", error);
+      }
+
+      /*
+        브라우저별 차이에 대비해 MediaStream track도 한 번 더 종료합니다.
+      */
+      try {
+        if (
+          targetWebcam.webcam &&
+          targetWebcam.webcam.srcObject
+        ) {
+          const tracks =
+            targetWebcam.webcam.srcObject.getTracks();
+
+          tracks.forEach((track) => track.stop());
+
+          targetWebcam.webcam.srcObject = null;
+        }
+      } catch (error) {
+        console.warn("카메라 트랙 정리 중 경고:", error);
+      }
+    }
+
+
+    function removeCameraElements() {
+      /*
+        기존 webcam canvas와 보조 video만 제거합니다.
+        업로드 이미지 같은 다른 요소는 삭제하지 않습니다.
+      */
+      const canvases =
+        mediaFrame.querySelectorAll("canvas");
+
+      canvases.forEach((canvas) => canvas.remove());
+
+      const helperVideos =
+        mediaFrame.querySelectorAll(".ios-helper-video");
+
+      helperVideos.forEach((video) => video.remove());
+    }
+
+
+    /* =========================================================
+       13. 사진 업로드
+       ========================================================= */
+
+    async function handleImageFile(event) {
+      clearMessages();
+
+      await selectInputMode("upload");
+
+      const file =
+        event.target.files &&
+        event.target.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      // MIME 형식이 이미지가 아니라면 분석하지 않음
+      if (
+        !file.type ||
+        !file.type.startsWith("image/")
+      ) {
+        showError(
+          "이미지 파일이 아닙니다. JPG, PNG 등 브라우저에서 열 수 있는 이미지 파일을 선택해주세요."
+        );
+
+        imageFileInput.value = "";
+        return;
+      }
+
+      clearUploadedImage(false);
+
+      try {
+        showInputStatus(
+          "사진을 읽고 있습니다…"
+        );
+
+        uploadObjectUrl =
+          URL.createObjectURL(file);
+
+        await loadImageIntoPreview(
+          uploadedImage,
+          uploadObjectUrl
+        );
+
+        previewPlaceholder.hidden = true;
+        uploadedImage.hidden = false;
+
+        showInputStatus(
+          "AI가 사진을 분석하고 있습니다…"
+        );
+
+        await loadModel();
+
+        /*
+          업로드한 HTMLImageElement를 그대로 model.predict()에 전달합니다.
+          사진은 서버로 전송하지 않습니다.
+        */
+        const predictions =
+          await model.predict(uploadedImage);
+
+        displayPredictions(predictions);
+
+        resultState.textContent = "사진 분석 완료";
+        hideInputStatus();
+      } catch (error) {
+        console.error("이미지 처리 오류:", error);
+
+        clearUploadedImage();
+
+        showPlaceholder(
+          "사진을 읽을 수 없습니다",
+          "다른 이미지 파일을 선택해주세요."
+        );
+
+        showError(
+          "선택한 이미지를 읽거나 분석하지 못했습니다. 파일이 손상되지 않았는지 확인하고 JPG 또는 PNG 같은 다른 이미지로 다시 시도해주세요."
+        );
+
+        resetPredictionResult("사진 분석 실패");
+      }
+    }
+
+
+    function loadImageIntoPreview(imageElement, objectUrl) {
+      return new Promise((resolve, reject) => {
+        imageElement.onload = () => {
+          imageElement.onload = null;
+          imageElement.onerror = null;
+          resolve();
+        };
+
+        imageElement.onerror = () => {
+          imageElement.onload = null;
+          imageElement.onerror = null;
+          reject(
+            new Error("브라우저가 이미지를 읽지 못했습니다.")
+          );
+        };
+
+        imageElement.src = objectUrl;
+      });
+    }
+
+
+    /* =========================================================
+       14. 업로드 이미지 정리
+       ========================================================= */
+
+    function clearUploadedImage(clearInput = true) {
+      uploadedImage.onload = null;
+      uploadedImage.onerror = null;
+
+      uploadedImage.hidden = true;
+
+      if (uploadedImage.src) {
+        uploadedImage.removeAttribute("src");
+      }
+
+      /*
+        새 파일을 선택하거나 카메라로 전환할 때
+        이전 Object URL을 반드시 해제합니다.
+      */
+      if (uploadObjectUrl) {
+        URL.revokeObjectURL(uploadObjectUrl);
+        uploadObjectUrl = null;
+      }
+
+      if (clearInput) {
+        imageFileInput.value = "";
+      }
+    }
+
+
+    /* =========================================================
+       15. 오류 안내
+       ========================================================= */
+
+    function showCameraError(error) {
+      const errorName =
+        error && error.name
+          ? error.name
+          : "";
+
+      if (
+        errorName === "NotAllowedError" ||
+        errorName === "PermissionDeniedError" ||
+        errorName === "SecurityError"
+      ) {
+        showError(
+          "카메라 사용 권한이 거부되었습니다. 브라우저의 사이트 권한에서 카메라를 허용한 뒤 다시 '카메라 시작'을 눌러주세요."
+        );
+        return;
+      }
+
+      if (
+        errorName === "NotFoundError" ||
+        errorName === "DevicesNotFoundError"
+      ) {
+        showError(
+          "사용할 수 있는 카메라를 찾지 못했습니다. 카메라가 연결되어 있는지 확인하거나 사진 업로드 기능을 이용해주세요."
+        );
+        return;
+      }
+
+      if (
+        errorName === "NotReadableError" ||
+        errorName === "TrackStartError"
+      ) {
+        showError(
+          "카메라를 사용할 수 없습니다. 다른 앱이 카메라를 사용하고 있다면 종료한 뒤 다시 시도해주세요."
+        );
+        return;
+      }
+
+      if (errorName === "OverconstrainedError") {
+        showError(
+          "현재 기기에서 요청한 카메라 설정을 사용할 수 없습니다. 브라우저를 새로고침하거나 사진 업로드 기능을 이용해주세요."
+        );
+        return;
+      }
+
+      if (!model) {
+        showError(
+          "AI 모델을 불러오지 못했습니다. 인터넷 연결과 모델 주소를 확인한 뒤 모델을 다시 불러와주세요."
+        );
+        return;
+      }
+
+      showError(
+        "카메라를 시작하지 못했습니다. 브라우저의 카메라 권한과 기기 상태를 확인한 뒤 다시 시도해주세요."
+      );
+    }
+
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.hidden = false;
+
+      hideInputStatus();
+    }
+
+
+    function showInputStatus(message) {
+      inputStatusMessage.textContent = message;
+      inputStatusMessage.hidden = false;
+    }
+
+
+    function hideInputStatus() {
+      inputStatusMessage.hidden = true;
+      inputStatusMessage.textContent = "";
+    }
+
+
+    function clearMessages() {
+      errorMessage.hidden = true;
+      errorMessage.textContent = "";
+
+      hideInputStatus();
+    }
+
+
+    /* =========================================================
+       16. 미리보기 안내
+       ========================================================= */
+
+    function showPlaceholder(title, text) {
+      previewPlaceholder.hidden = false;
+
+      placeholderTitle.textContent = title;
+      placeholderText.textContent = text;
+    }
+
+
+    function isIOSDevice() {
+      return (
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (
+          navigator.platform === "MacIntel" &&
+          navigator.maxTouchPoints > 1
+        )
+      );
+    }
+
+
+    /* =========================================================
+       17. 이벤트 연결
+       ========================================================= */
+
+    cameraTab.addEventListener("click", () => {
+      selectInputMode("camera");
+    });
+
+
+    uploadTab.addEventListener("click", () => {
+      selectInputMode("upload");
+    });
+
+
+    startCameraButton.addEventListener(
+      "click",
+      startCamera
+    );
+
+
+    stopCameraButton.addEventListener(
+      "click",
+      stopCamera
+    );
+
+
+    imageFileInput.addEventListener(
+      "change",
+      handleImageFile
+    );
+
+
+    retryModelButton.addEventListener(
+      "click",
+      async () => {
+        clearMessages();
+
+        modelLoadPromise = null;
+
+        try {
+          await loadModel();
+        } catch (error) {
+          // 상세 오류 표시는 loadModel() 내부에서 처리
+        }
+      }
+    );
+
+
+    /*
+      페이지를 떠날 때도 카메라와 Object URL을 정리합니다.
+    */
+    window.addEventListener("beforeunload", () => {
+      stopCamera();
+      clearUploadedImage();
+    });
+
+
+    /*
+      페이지가 열리면 모델만 불러옵니다.
+      카메라는 절대 자동으로 실행하지 않습니다.
+    */
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        await loadModel();
+      } catch (error) {
+        // 화면에 이미 재시도 안내가 표시됩니다.
+      }
+    });
+  </script>
+</body>
+</html>
